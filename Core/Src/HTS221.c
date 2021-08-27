@@ -20,7 +20,7 @@ static uint8_t read8(hts221_t* sensor, uint8_t Mem_reg)
 static uint16_t read16(hts221_t* sensor, uint8_t Mem_reg)
 {
 	uint8_t value[2];
-
+	// |n order to read 16 bits register we need to set 1 in MSB in subaddress that we want to read
 	HAL_I2C_Mem_Read(sensor->i2c_handler, sensor->address, (Mem_reg | 0x80), I2C_MEMADD_SIZE_8BIT, value, 2, I2C_HTS_TIMEOUT);
 
 	return (((uint16_t)(value[1])) << 8) | (uint16_t)value[0];

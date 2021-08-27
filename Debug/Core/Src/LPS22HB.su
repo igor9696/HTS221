@@ -1,0 +1,9 @@
+LPS22HB.c:11:16:read8	40	static
+LPS22HB.c:18:13:write8	40	static
+LPS22HB.c:24:16:read24	40	static
+LPS22HB.c:31:16:read16	40	static
+LPS22HB.c:45:9:LPS22HB_Init	32	static
+LPS22HB.c:63:6:LPS22HB_GetDataOneHot	32	static
+LPS22HB.c:83:6:LPS22HB_GetData	32	static
+LPS22HB.c:100:6:LPS22HB_Set_ODR	24	static
+LPS22HB.c:112:6:LPS22HB_Set_DRDY_Signal	24	static

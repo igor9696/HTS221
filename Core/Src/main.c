@@ -28,11 +28,13 @@
 #include "stdio.h"
 #include "HTS221.h"
 #include "stdbool.h"
+#include "LPS22HB.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 hts221_t HTS221;
+LPS22HB_t LPS22HB;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -49,6 +51,8 @@ hts221_t HTS221;
 /* USER CODE BEGIN PV */
 int16_t temp;
 uint16_t humidity;
+int32_t pressure;
+uint16_t tempa;
 volatile uint8_t DATA_READY_FLAG;
 /* USER CODE END PV */
 
@@ -98,12 +102,15 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   HTS221_Init(&HTS221, &hi2c1, DEV_ADDR);
+  LPS22HB_Init(&LPS22HB, LPS_DEV_ADDR, &hi2c1);
+
   HTS221_DRDY_Enable(&HTS221, OPEN_DRAIN, ACTIVE_LOW);
   HTS221_set_output_data_rate(&HTS221, Hz_1);
-
   HTS221_get_data(&HTS221, &temp, &humidity);
 
-
+  LPS22HB_Set_ODR(&LPS22HB, rate_1Hz);
+  LPS22HB_Set_DRDY_Signal(&LPS22HB, DRDY_ActiveLow, DRDY_OpenDrain, 1);
+  LPS22HB_GetData(&LPS22HB, &pressure, &tempa);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -114,6 +121,11 @@ int main(void)
 	  {
 		HTS221_get_data(&HTS221, &temp, &humidity);
 		DATA_READY_FLAG = 0;
+	  }
+
+	  if(HAL_GPIO_ReadPin(LPS22HB_DRDY_GPIO_Port, LPS22HB_DRDY_Pin) == GPIO_PIN_RESET)
+	  {
+		  LPS22HB_GetData(&LPS22HB, &pressure, &tempa);
 	  }
 
 	  //HTS221_get_data_OneHot(&HTS221, &temp, &humidity);
