@@ -10,6 +10,10 @@ RM := rm -rf
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include Drivers/STM32F1xx_HAL_Driver/Src/subdir.mk
+-include Drivers/STM32F1xx_HAL_Driver/Debug/Drivers/STM32F1xx_HAL_Driver/Src/subdir.mk
+-include Drivers/STM32F1xx_HAL_Driver/Debug/Core/Startup/subdir.mk
+-include Drivers/STM32F1xx_HAL_Driver/Debug/Core/Src/subdir.mk
+-include Drivers/STM32F1xx_HAL_Driver/Debug/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
 -include subdir.mk

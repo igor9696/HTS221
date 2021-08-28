@@ -19,7 +19,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "i2c.h"
+#include "rtc.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -29,6 +31,7 @@
 #include "HTS221.h"
 #include "stdbool.h"
 #include "LPS22HB.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,14 +54,22 @@ LPS22HB_t LPS22HB;
 /* USER CODE BEGIN PV */
 int16_t temp;
 uint16_t humidity;
-int32_t pressure;
-uint16_t tempa;
+int16_t pressure;
+int16_t tempa;
+int16_t message[32];
+uint8_t length;
+
+RTC_TimeTypeDef rtc_time;
+RTC_DateTypeDef	rtc_date;
+
+volatile uint8_t RTC_ALARM_FLAG;
 volatile uint8_t DATA_READY_FLAG;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+void RTC_set_alarm(RTC_TimeTypeDef* RTC_time, uint8_t time_interval_minutes);
 
 
 
@@ -98,8 +109,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_I2C1_Init();
+  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
   HTS221_Init(&HTS221, &hi2c1, DEV_ADDR);
   LPS22HB_Init(&LPS22HB, LPS_DEV_ADDR, &hi2c1);
@@ -111,23 +124,36 @@ int main(void)
   LPS22HB_Set_ODR(&LPS22HB, rate_1Hz);
   LPS22HB_Set_DRDY_Signal(&LPS22HB, DRDY_ActiveLow, DRDY_OpenDrain, 1);
   LPS22HB_GetData(&LPS22HB, &pressure, &tempa);
+  HAL_RTC_GetTime(&hrtc, &rtc_time, RTC_FORMAT_BIN);
+  RTC_set_alarm(&rtc_time, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  if(DATA_READY_FLAG == 1)
-	  {
-		HTS221_get_data(&HTS221, &temp, &humidity);
-		DATA_READY_FLAG = 0;
-	  }
+	  HAL_RTC_GetTime(&hrtc, &rtc_time, RTC_FORMAT_BIN);
 
-	  if(HAL_GPIO_ReadPin(LPS22HB_DRDY_GPIO_Port, LPS22HB_DRDY_Pin) == GPIO_PIN_RESET)
+	  if(RTC_ALARM_FLAG == 0)
 	  {
-		  LPS22HB_GetData(&LPS22HB, &pressure, &tempa);
-	  }
+		  RTC_ALARM_FLAG = 1;
 
+		  if(DATA_READY_FLAG == 1)
+		  {
+			  HTS221_get_data(&HTS221, &temp, &humidity);
+			  DATA_READY_FLAG = 0;
+		  }
+
+		  if(HAL_GPIO_ReadPin(LPS22HB_DRDY_GPIO_Port, LPS22HB_DRDY_Pin) == GPIO_PIN_RESET)
+		  {
+			  LPS22HB_GetData(&LPS22HB, &pressure, &tempa);
+		  }
+
+
+		  length = sprintf(&message, "Pressure:%dhPa\r\nTemperature:%dC\r\nHumidity:%d%%\r\n\r\n", pressure, temp, humidity);
+		  HAL_UART_Transmit(&huart2, &message, length, 1000);
+
+	  }
 	  //HTS221_get_data_OneHot(&HTS221, &temp, &humidity);
     /* USER CODE END WHILE */
 
@@ -144,11 +170,13 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSE;
+  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -171,6 +199,12 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /* USER CODE BEGIN 4 */
@@ -181,6 +215,27 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		DATA_READY_FLAG = 1;
 	}
 
+}
+
+void HAL_RTC_AlarmAEventCallback(RTC_HandleTypeDef *hrtc)
+{
+	RTC_ALARM_FLAG = 0;
+
+	RTC_set_alarm(&rtc_time, 1);
+}
+
+
+void RTC_set_alarm(RTC_TimeTypeDef* RTC_time, uint8_t time_interval_minutes)
+{
+	RTC_AlarmTypeDef sAlarm = {0};
+
+	sAlarm.Alarm = RTC_ALARM_A;
+	sAlarm.AlarmTime.Minutes = RTC_time->Minutes + time_interval_minutes;
+	sAlarm.AlarmTime.Seconds = RTC_time->Seconds;
+	sAlarm.AlarmTime.Hours = RTC_time->Hours;
+
+
+	HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BIN);
 }
 
 /* USER CODE END 4 */

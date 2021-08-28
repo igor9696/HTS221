@@ -30,8 +30,6 @@
 #define TEMP_OUT_H				0x2C
 
 
-
-
 #define PRESSURE_ACCURACY		4096 // 4096 LSB/hPa
 #define TEMPERATURE_ACCURACY	100  // 100 counts/C
 
@@ -63,7 +61,7 @@ typedef struct LPS22HB_t
 
 uint8_t LPS22HB_Init(LPS22HB_t* sensor, uint8_t device_address, I2C_HandleTypeDef* i2c_handler);
 void LPS22HB_GetDataOneHot(LPS22HB_t* sensor, int32_t* pressure_data, uint16_t* temperature_data);
-void LPS22HB_GetData(LPS22HB_t* sensor, int32_t* pressure_data, uint16_t* temperature_data);
+void LPS22HB_GetData(LPS22HB_t* sensor, int16_t* pressure_data, int16_t* temperature_data);
 void LPS22HB_Set_ODR(LPS22HB_t* sensor, uint8_t ODR);
 void LPS22HB_Set_DRDY_Signal(LPS22HB_t* sensor, uint8_t active_level, uint8_t output_type, uint8_t enable);
 

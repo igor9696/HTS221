@@ -22,5 +22,9 @@ OBJCOPY_BIN :=
 SUBDIRS := \
 Core/Src \
 Core/Startup \
+Drivers/STM32F1xx_HAL_Driver/Debug/Core/Src \
+Drivers/STM32F1xx_HAL_Driver/Debug/Core/Startup \
+Drivers/STM32F1xx_HAL_Driver/Debug/Drivers/STM32F1xx_HAL_Driver/Src \
+Drivers/STM32F1xx_HAL_Driver/Debug \
 Drivers/STM32F1xx_HAL_Driver/Src \
 

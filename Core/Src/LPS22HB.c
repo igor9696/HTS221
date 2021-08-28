@@ -80,7 +80,7 @@ void LPS22HB_GetDataOneHot(LPS22HB_t* sensor, int32_t* pressure_data, uint16_t* 
 	*temperature_data = temp_raw / TEMPERATURE_ACCURACY;
 }
 
-void LPS22HB_GetData(LPS22HB_t* sensor, int32_t* pressure_data, uint16_t* temperature_data)
+void LPS22HB_GetData(LPS22HB_t* sensor, int16_t* pressure_data, int16_t* temperature_data)
 {
 	// pull data from registers
 	int32_t press_raw = 0;
